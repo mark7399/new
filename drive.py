@@ -137,10 +137,10 @@ class Scene8_Derivation(MovingCameraScene):
         frac2_cy = 3.0
 
         # 分子项
-        m1_nf1 = MathTex(r"R^2-(0s)^2")
-        m1_nf2 = MathTex(r"R^2-(1s)^2")
-        m1_nf3 = MathTex(r"R^2-(2s)^2")
-        m1_nff = MathTex(r"R^2-((n-1)s)^2")
+        m1_nf1 = MathTex(r"R^2", r"-(0s)^2")
+        m1_nf2 = MathTex(r"R^2", r"-(1s)^2")
+        m1_nf3 = MathTex(r"R^2", r"-(2s)^2")
+        m1_nff = MathTex(r"R^2", r"-((n-1)s)^2")
 
         # 用 next_to 链推算 x 坐标，整体居中于 cx=5.5
         _r1  = m1_nf1.copy().move_to(ORIGIN)
@@ -244,7 +244,7 @@ class Scene8_Derivation(MovingCameraScene):
         self.wait(0.5)
 
         # 步骤5：R² → R²-(0s)²（ReplacementTransform 还原）
-        m1_nf1_restored = MathTex(r"R^2-(0s)^2").move_to([m1_x1, m1_num_y, 0])
+        m1_nf1_restored = MathTex(r"R^2", r"-(0s)^2").move_to([m1_x1, m1_num_y, 0])
         self.play(ReplacementTransform(m1_r2_src, m1_nf1_restored), run_time=0.8)
         self.wait(1)
 
@@ -290,13 +290,8 @@ class Scene8_Derivation(MovingCameraScene):
         )
         self.wait(0.3)
 
-        # 步骤B：分子各项R²（幻象）同时飞向 new_num[0]（AR²）
-        r2_srcs = [
-            MathTex(r"R^2").move_to([m1_x1,  m1_num_y, 0]),
-            MathTex(r"R^2").move_to([m1_x2,  m1_num_y, 0]),
-            MathTex(r"R^2").move_to([m1_x3,  m1_num_y, 0]),
-            MathTex(r"R^2").move_to([m1_xff, m1_num_y, 0]),
-        ]
+        # 步骤B：分子各项R²（用[0]子项取实际位置）同时飞向 new_num[0]（AR²）
+        r2_srcs = [m1_nf1_restored[0], m1_nf2[0], m1_nf3[0], m1_nff[0]]
         nR2_anims = [TransformFromCopy(s, new_num[0].copy()) for s in r2_srcs]
         self.play(*nR2_anims, run_time=1.2)
         self.wait(1)
