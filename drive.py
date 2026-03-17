@@ -257,8 +257,9 @@ class Scene8_Derivation(MovingCameraScene):
 
         frac3_cy = 0.5
 
-        # 新分子三段：[0]=AR²，[1]=-，[2]=s²(0²+1²+···+(n-1)²)
-        new_num = MathTex(r"AR^2", r"-", r"s^2(0^2+1^2+2^2+\cdots+(n-1)^2)")
+        # 新分子十段：[0]=AR² [1]=- [2]=s² [3]=( [4]=0² [5]=+1² [6]=+2² [7]=+··· [8]=+(n-1)² [9]=)
+        new_num = MathTex(r"AR^2", r"-", r"s^2", r"(",
+                          r"0^2", r"+1^2", r"+2^2", r"+\cdots", r"+(n-1)^2", r")")
         new_den = MathTex(r"AR^2")
 
         # Y 坐标
@@ -294,4 +295,41 @@ class Scene8_Derivation(MovingCameraScene):
         r2_srcs = [m1_nf1_restored[0], m1_nf2[0], m1_nf3[0], m1_nff[0]]
         nR2_anims = [TransformFromCopy(s, new_num[0].copy()) for s in r2_srcs]
         self.play(*nR2_anims, run_time=1.2)
+        self.wait(1)
+
+        # 步骤C：公式一分子去括号 (ks)² → k²s²，整体替换为 4 段形式
+        # [0]=R²  [1]=-  [2]=k²  [3]=s²
+        nf1_new = MathTex(r"R^2", r"-", r"0^2", r"s^2").move_to([m1_x1,  m1_num_y, 0])
+        nf2_new = MathTex(r"R^2", r"-", r"1^2", r"s^2").move_to([m1_x2,  m1_num_y, 0])
+        nf3_new = MathTex(r"R^2", r"-", r"2^2", r"s^2").move_to([m1_x3,  m1_num_y, 0])
+        nff_new = MathTex(r"R^2", r"-", r"(n-1)^2", r"s^2").move_to([m1_xff, m1_num_y, 0])
+        self.play(
+            ReplacementTransform(m1_nf1_restored, nf1_new),
+            ReplacementTransform(m1_nf2, nf2_new),
+            ReplacementTransform(m1_nf3, nf3_new),
+            ReplacementTransform(m1_nff, nff_new),
+            run_time=0.8
+        )
+        self.wait(0.5)
+
+        # 步骤D：所有 s² 同时飞向 new_num[2]，同时 FadeIn "-" 和 "("
+        s2_anims = [TransformFromCopy(s, new_num[2].copy())
+                    for s in [nf1_new[3], nf2_new[3], nf3_new[3], nff_new[3]]]
+        self.play(
+            *s2_anims,
+            FadeIn(new_num[1]),
+            FadeIn(new_num[3]),
+            run_time=1.0
+        )
+        self.wait(0.3)
+
+        # 步骤E：0²,1²,2²,···,(n-1)² 按 0.1 延迟依次飞入各自位置，同时 FadeIn ")"
+        num2_srcs = [nf1_new[2], nf2_new[2], nf3_new[2], m1_nd, nff_new[2]]
+        num2_tgts = [new_num[4], new_num[5], new_num[6], new_num[7], new_num[8]]
+        num2_anims = [TransformFromCopy(s, t.copy()) for s, t in zip(num2_srcs, num2_tgts)]
+        self.play(
+            LaggedStart(*num2_anims, lag_ratio=0.1),
+            FadeIn(new_num[9]),
+            run_time=1.5
+        )
         self.wait(1)
