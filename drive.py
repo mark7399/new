@@ -136,8 +136,8 @@ class Scene8_Derivation(MovingCameraScene):
         # --- m=1 分式布局（frac_center_y=3.0，cx=5.5，gap=0.3）---
         frac2_cy = 3.0
 
-        # 分子项：第一项拆成两段实现源对象隔离，[0]=R^2（发牌源），[1]=-(0s)^2（遮罩）
-        m1_nf1 = MathTex(r"R^2", r"-(0s)^2")
+        # 分子项
+        m1_nf1 = MathTex(r"R^2-(0s)^2")
         m1_nf2 = MathTex(r"R^2-(1s)^2")
         m1_nf3 = MathTex(r"R^2-(2s)^2")
         m1_nff = MathTex(r"R^2-((n-1)s)^2")
@@ -198,49 +198,105 @@ class Scene8_Derivation(MovingCameraScene):
             color=WHITE, stroke_width=3
         )
 
-        # 步骤1：FadeIn 分子行
+        # 步骤1：分子行从左到右依次出现
         self.play(
-            FadeIn(VGroup(
-                m1_nf1, m1_np1, m1_nf2, m1_np2,
-                m1_nf3, m1_np3, m1_nd,  m1_np4, m1_nff
-            )),
-            run_time=1.5
-        )
-        self.wait(0.5)
-
-        # 步骤2：FadeOut -(0s)² 部分，暴露 R²
-        self.play(FadeOut(m1_nf1[1]), run_time=0.6)
-        self.wait(0.3)
-
-        # 步骤3：发牌 —— Scene03 模式
-        # 隐藏 emitter 定位于 R²（源），令每张牌从源位置淡出飞入
-        emitter = m1_nf1[0].copy()
-        emitter.move_to(m1_nf1[0].get_center())
-        emitter.set_opacity(0)
-        self.add(emitter)
-
-        # 目标：m1_nf1[0] 的副本，分别定位到分母四列
-        dr1 = m1_nf1[0].copy().move_to([m1_x1,  m1_den_y, 0])
-        dr2 = m1_nf1[0].copy().move_to([m1_x2,  m1_den_y, 0])
-        dr3 = m1_nf1[0].copy().move_to([m1_x3,  m1_den_y, 0])
-        dr4 = m1_nf1[0].copy().move_to([m1_xff, m1_den_y, 0])
-
-        deal_anims = [TransformFromCopy(emitter, t) for t in [dr1, dr2, dr3, dr4]]
-        # 发牌与分数线同时出现（参考 Scene03：Create(fraction_line2) 与 LaggedStart 同帧）
-        self.play(
-            LaggedStart(*deal_anims, lag_ratio=0.1),
-            Create(m1_frac_line),
+            LaggedStart(
+                FadeIn(m1_nf1),
+                FadeIn(m1_np1),
+                FadeIn(m1_nf2),
+                FadeIn(m1_np2),
+                FadeIn(m1_nf3),
+                FadeIn(m1_np3),
+                FadeIn(m1_nd),
+                FadeIn(m1_np4),
+                FadeIn(m1_nff),
+                lag_ratio=0.15
+            ),
             run_time=2
         )
         self.wait(0.5)
 
-        # 步骤4：分母加号、省略号 FadeIn
+        # 步骤2：R²-(0s)² → R²（ReplacementTransform，底部对齐消除 bounding box 偏移）
+        m1_r2_src = MathTex(r"R^2").move_to([m1_x1, m1_num_y, 0]).align_to(m1_nf2, UP)
+        self.play(ReplacementTransform(m1_nf1, m1_r2_src), run_time=0.8)
+        self.wait(0.3)
+
+        # 步骤3：发牌 —— Scene03 模式
+        # 隐藏 emitter 定位于 m1_r2_src，令每张牌从源位置淡出飞入
+        emitter = m1_r2_src.copy()
+        emitter.move_to(m1_r2_src.get_center())
+        emitter.set_opacity(0)
+        self.add(emitter)
+
+        # 目标：m1_r2_src 的副本，分别定位到分母四列
+        dr1 = m1_r2_src.copy().move_to([m1_x1,  m1_den_y, 0])
+        dr2 = m1_r2_src.copy().move_to([m1_x2,  m1_den_y, 0])
+        dr3 = m1_r2_src.copy().move_to([m1_x3,  m1_den_y, 0])
+        dr4 = m1_r2_src.copy().move_to([m1_xff, m1_den_y, 0])
+
+        deal_anims = [TransformFromCopy(emitter, t) for t in [dr1, dr2, dr3, dr4]]
         self.play(
+            LaggedStart(*deal_anims, lag_ratio=0.15),
+            Create(m1_frac_line),
             FadeIn(VGroup(m1_dd, m1_dp1, m1_dp2, m1_dp3, m1_dp4)),
-            run_time=0.8
+            run_time=1.5
         )
         self.wait(0.5)
 
-        # 步骤5：FadeIn -(0s)² 还原，分式完整呈现
-        self.play(FadeIn(m1_nf1[1]), run_time=0.6)
+        # 步骤5：R² → R²-(0s)²（ReplacementTransform 还原）
+        m1_nf1_restored = MathTex(r"R^2-(0s)^2").move_to([m1_x1, m1_num_y, 0])
+        self.play(ReplacementTransform(m1_r2_src, m1_nf1_restored), run_time=0.8)
+        self.wait(1)
+
+        # =====================================================================
+        # 第二行公式：AR² - s²(0²+1²+···+(n-1)²) / AR²
+        # =====================================================================
+        eq_sign = MathTex(r"=").scale(1.4).move_to([-2.5, 0.5, 0])
+        self.play(FadeIn(eq_sign), run_time=0.5)
+        self.wait(0.3)
+
+        frac3_cy = 0.5
+
+        # 新分子三段：[0]=AR²，[1]=-，[2]=s²(0²+1²+···+(n-1)²)
+        new_num = MathTex(r"AR^2", r"-", r"s^2(0^2+1^2+2^2+\cdots+(n-1)^2)")
+        new_den = MathTex(r"AR^2")
+
+        # Y 坐标
+        _yn3 = new_num.copy().next_to([0, frac3_cy, 0], UP,   buff=0.24)
+        num3_y = _yn3.get_center()[1]
+        _yd3 = new_den.copy().next_to([0, frac3_cy, 0], DOWN, buff=0.24)
+        den3_y = _yd3.get_center()[1]
+
+        # X 坐标：new_num 左边距 eq_sign 右边 0.5
+        new_num.move_to([0, num3_y, 0])
+        new_num.set_x(eq_sign.get_right()[0] + 0.5 + new_num.width / 2)
+
+        cx3 = new_num.get_center()[0]
+        new_den.move_to([cx3, den3_y, 0])
+
+        frac3_left  = new_num.get_left()[0]  - 0.2
+        frac3_right = new_num.get_right()[0] + 0.2
+        frac3_line  = Line([frac3_left,  frac3_cy, 0],
+                            [frac3_right, frac3_cy, 0],
+                            color=WHITE, stroke_width=3)
+
+        # 步骤A：分数线出现 + 分母4个R²同时飞向 new_den(AR²)
+        den_anims = [TransformFromCopy(src, new_den.copy())
+                     for src in [dr1, dr2, dr3, dr4]]
+        self.play(
+            Create(frac3_line),
+            *den_anims,
+            run_time=1.2
+        )
+        self.wait(0.3)
+
+        # 步骤B：分子各项R²（幻象）同时飞向 new_num[0]（AR²）
+        r2_srcs = [
+            MathTex(r"R^2").move_to([m1_x1,  m1_num_y, 0]),
+            MathTex(r"R^2").move_to([m1_x2,  m1_num_y, 0]),
+            MathTex(r"R^2").move_to([m1_x3,  m1_num_y, 0]),
+            MathTex(r"R^2").move_to([m1_xff, m1_num_y, 0]),
+        ]
+        nR2_anims = [TransformFromCopy(s, new_num[0].copy()) for s in r2_srcs]
+        self.play(*nR2_anims, run_time=1.2)
         self.wait(1)
