@@ -249,7 +249,7 @@ class Scene8_Derivation(MovingCameraScene):
         self.wait(1)
 
         # =====================================================================
-        # 第二行公式：AR² - s²(0²+1²+···+(n-1)²) / AR²
+        # 第二行公式：nR² - s²(0²+1²+···+(n-1)²) / nR²
         # =====================================================================
         eq_sign = MathTex(r"=").scale(1.4).move_to([-2.5, 0.5, 0])
         self.play(FadeIn(eq_sign), run_time=0.5)
@@ -257,10 +257,10 @@ class Scene8_Derivation(MovingCameraScene):
 
         frac3_cy = 0.5
 
-        # 新分子十段：[0]=AR² [1]=- [2]=s² [3]=( [4]=0² [5]=+1² [6]=+2² [7]=+··· [8]=+(n-1)² [9]=)
-        new_num = MathTex(r"AR^2", r"-", r"s^2", r"(",
+        # 新分子十段：[0]=nR² [1]=- [2]=s² [3]=( [4]=0² [5]=+1² [6]=+2² [7]=+··· [8]=+(n-1)² [9]=)
+        new_num = MathTex(r"nR^2", r"-", r"s^2", r"(",
                           r"0^2", r"+1^2", r"+2^2", r"+\cdots", r"+(n-1)^2", r")")
-        new_den = MathTex(r"AR^2")
+        new_den = MathTex(r"nR^2")
 
         # Y 坐标
         _yn3 = new_num.copy().next_to([0, frac3_cy, 0], UP,   buff=0.24)
